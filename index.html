@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCV Care Pathway · Interactive Guide</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
+  body { background:#f4f7fc; display:flex; justify-content:center; padding:2rem 1rem; }
+  .app-container { max-width:1100px; width:100%; background:#fff; border-radius:32px;
+    box-shadow:0 20px 40px -12px rgba(0,20,40,.25); padding:2rem 2rem 2.5rem; }
+  h1 { font-size:2rem; font-weight:600; color:#0b2a4a; margin-bottom:.25rem; }
+  .subhead { color:#3a5e7a; margin-bottom:2rem; border-left:4px solid #1a7f64;
+    padding:.75rem 1rem; font-size:1rem; background:#eef9f5; border-radius:0 12px 12px 0; }
+
+  .steps { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:2rem;
+    position:sticky; top:0; background:#fff; padding:.5rem 0; z-index:10; }
+  .step-pill { background:#e3eaf2; color:#1b3b5a; padding:.5rem 1rem; border-radius:40px;
+    font-size:.85rem; font-weight:500; display:flex; align-items:center; gap:6px;
+    border:none; cursor:pointer; transition:.15s; font-family:inherit; }
+  .step-pill:hover { background:#d3dfec; }
+  .step-pill.active { background:#0b2a4a; color:#fff; }
+  .step-pill .num { background:rgba(255,255,255,.2); width:20px; height:20px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; }
+  .step-pill.active .num { background:#1a7f64; color:#fff; }
+
+  .card { background:#fff; border:1px solid #d9e2ec; border-radius:24px; padding:1.75rem;
+    margin-bottom:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,.02); scroll-margin-top:4.5rem; }
+  .card-title { font-size:1.25rem; font-weight:600; color:#0b2a4a; margin-bottom:1rem;
+    display:flex; align-items:center; gap:.5rem; border-bottom:1px solid #e2e8f0; padding-bottom:.75rem; }
+  .sub-title { font-size:1rem; font-weight:600; color:#1e3b5a; margin:1.5rem 0 .75rem; }
+  .form-group { margin-bottom:1.25rem; }
+  label { display:block; font-weight:500; color:#1e3b5a; margin-bottom:.4rem; font-size:.9rem; }
+  select, input[type="number"] { width:100%; padding:.75rem 1rem; border-radius:14px;
+    border:1px solid #cfddee; background:#f9fcff; font-size:.95rem; }
+  select:focus, input:focus { outline:2px solid #1a7f64; border-color:transparent; background:#fff; }
+  .radio-group, .check-grid { display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; align-items:center; }
+  .radio-group label, .check-grid label { display:inline-flex; align-items:center; gap:.4rem;
+    font-weight:400; margin-bottom:0; font-size:.95rem; cursor:pointer; line-height:1.2; }
+  .radio-group input[type="radio"], .check-grid input[type="checkbox"] {
+    width:16px; height:16px; margin:0; flex-shrink:0; accent-color:#1a7f64; cursor:pointer; }
+  .btn { background:#0b2a4a; color:#fff; border:none; padding:.9rem 1.8rem; border-radius:40px;
+    font-weight:600; font-size:.95rem; cursor:pointer; display:inline-flex; align-items:center;
+    gap:.5rem; box-shadow:0 4px 10px rgba(11,42,74,.15); transition:.15s; font-family:inherit; }
+  .btn:hover { background:#1a4a72; transform:translateY(-1px); }
+  .btn.secondary { background:#fff; color:#0b2a4a; border:1.5px solid #b8cee4; box-shadow:none; }
+  .btn.secondary:hover { background:#f0f7ff; }
+  .btn-group { display:flex; flex-wrap:wrap; gap:1rem; margin-top:1.5rem; align-items:center; }
+  .result-box { background:#eef9f5; border-left:6px solid #1a7f64; padding:1.25rem 1.5rem;
+    border-radius:12px; margin:1.5rem 0 .5rem; font-size:.98rem; line-height:1.6; color:#0b2a4a; }
+  .result-box.warning { background:#fff6e5; border-left-color:#d97706; }
+  .result-box.danger  { background:#ffeae9; border-left-color:#b91c1c; }
+  .result-box.info    { background:#e8f0fe; border-left-color:#1e5a9e; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+
+  .regimen-table { width:100%; border-collapse:collapse; margin-top:.5rem; font-size:.88rem; }
+  .regimen-table th { background:#0b2a4a; color:#fff; text-align:left; padding:.7rem .8rem;
+    font-weight:600; font-size:.78rem; letter-spacing:.02em; text-transform:uppercase; }
+  .regimen-table th:first-child { border-radius:12px 0 0 0; }
+  .regimen-table th:last-child { border-radius:0 12px 0 0; }
+  .regimen-table td { padding:.75rem .8rem; border-bottom:1px solid #e2e8f0; vertical-align:top; line-height:1.5; }
+  .regimen-table tr:last-child td { border-bottom:none; }
+  .regimen-table tr:nth-child(even) { background:#f8fbff; }
+  .drug-name { font-weight:700; color:#0b2a4a; }
+  .drug-abbr { font-size:.75rem; color:#5a7a9a; font-weight:500; }
+  .svr-badge { display:inline-block; background:#dcfce7; color:#166534; font-weight:700;
+    font-size:.78rem; padding:.2rem .55rem; border-radius:20px; white-space:nowrap; }
+  .duration-badge { display:inline-block; background:#e0e7ff; color:#3730a3; font-weight:600;
+    font-size:.78rem; padding:.2rem .55rem; border-radius:20px; white-space:nowrap; }
+  .note-list { list-style:none; margin-top:.5rem; }
+  .note-list li { padding:.5rem 0 .5rem 1.4rem; position:relative; line-height:1.55;
+    border-bottom:1px dashed #e2e8f0; font-size:.9rem; }
+  .note-list li:last-child { border-bottom:none; }
+  .note-list li::before { content:"▸"; position:absolute; left:.2rem; color:#1a7f64; font-weight:700; }
+  .pill-tag { display:inline-block; font-size:.7rem; font-weight:700; padding:.15rem .5rem;
+    border-radius:20px; margin-right:.35rem; }
+  .pill-tag.first { background:#dcfce7; color:#166534; }
+  .pill-tag.alt   { background:#e0e7ff; color:#3730a3; }
+  .pill-tag.salv  { background:#fef3c7; color:#92400e; }
+  .pill-tag.warn  { background:#fee2e2; color:#991b1b; }
+  .pill-tag.renal { background:#cffafe; color:#155e75; }
+  .pill-tag.hiv   { background:#ede9fe; color:#5b21b6; }
+  .pill-tag.hbv   { background:#fef9c3; color:#854d0e; }
+  .pill-tag.acute { background:#ffe4e6; color:#9f1239; }
+  .legend { display:flex; flex-wrap:wrap; gap:1rem; margin-top:1rem; font-size:.8rem; color:#3a5e7a; }
+  .legend span { display:inline-flex; align-items:center; gap:.35rem; }
+
+  /* COINFECTION BOXES */
+  .coinfection-box {
+    border-radius:16px;
+    padding:1.25rem 1.5rem;
+    margin-top:1rem;
+  }
+  .coinfection-box.hiv-box {
+    background:#f5f3ff;
+    border:1px solid #c4b5fd;
+  }
+  .coinfection-box.hbv-box {
+    background:#fffbeb;
+    border:1px solid #fcd34d;
+  }
+  .coinfection-box h4 {
+    font-size:.95rem;
+    font-weight:700;
+    margin-bottom:.75rem;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+  }
+  .coinfection-box.hiv-box h4 { color:#5b21b6; }
+  .coinfection-box.hbv-box h4 { color:#854d0e; }
+  .coinfection-box ul {
+    list-style:none;
+    padding-left:0;
+  }
+  .coinfection-box li {
+    padding:.45rem 0 .45rem 1.4rem;
+    position:relative;
+    font-size:.88rem;
+    line-height:1.55;
+    border-bottom:1px dashed rgba(0,0,0,.08);
+  }
+  .coinfection-box li:last-child { border-bottom:none; }
+  .coinfection-box li::before {
+    content:"▸";
+    position:absolute;
+    left:.2rem;
+    font-weight:700;
+  }
+  .coinfection-box.hiv-box li::before { color:#7c3aed; }
+  .coinfection-box.hbv-box li::before { color:#d97706; }
+
+  .side-effects-box {
+    background:#fdf8f3;
+    border:1px solid #f0d9b5;
+    border-radius:16px;
+    padding:1.25rem 1.5rem;
+    margin-top:1rem;
+  }
+  .side-effects-box h4 {
+    font-size:.95rem;
+    font-weight:700;
+    color:#7c4a03;
+    margin-bottom:.75rem;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+  }
+  .side-effects-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+  }
+  .side-effect-item {
+    background:#fff;
+    border-radius:12px;
+    padding:.85rem 1rem;
+    border:1px solid #f5e6d3;
+  }
+  .side-effect-item .se-drug {
+    font-weight:700;
+    font-size:.85rem;
+    color:#0b2a4a;
+    margin-bottom:.35rem;
+  }
+  .side-effect-item .se-list {
+    font-size:.82rem;
+    color:#3a5e7a;
+    line-height:1.55;
+  }
+  .side-effect-item .se-list strong {
+    color:#b45309;
+  }
+  .se-common { color:#166534; font-weight:600; }
+  .se-rare { color:#b91c1c; font-weight:600; }
+
+  .ddi-list { list-style:none; margin-top:.5rem; }
+  .ddi-list li { padding:.5rem 0; border-bottom:1px solid #e2e8f0; display:flex;
+    gap:.75rem; align-items:baseline; }
+  .ddi-list li:last-child { border-bottom:none; }
+  .ddi-tag { font-size:.7rem; font-weight:700; background:#dbeafe; color:#1e3a8a;
+    padding:.2rem .6rem; border-radius:20px; white-space:nowrap; }
+  .ddi-tag.contra  { background:#fee2e2; color:#991b1b; }
+  .ddi-tag.monitor { background:#fef3c7; color:#92400e; }
+  .small-note { font-size:.8rem; color:#4a6a8a; margin-top:.75rem; padding:.5rem .75rem;
+    background:#f0f5fa; border-radius:10px; }
+  .hidden { display:none !important; }
+  hr { border:none; border-top:1px solid #d9e2ec; margin:1.5rem 0; }
+  @media (max-width:700px) {
+    .app-container{padding:1.25rem;} .grid-2{grid-template-columns:1fr;} h1{font-size:1.5rem;}
+    .regimen-table{font-size:.78rem;} .regimen-table th, .regimen-table td{padding:.5rem .5rem;}
+    .side-effects-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="app-container">
+  <h1>🩺 HCV Care Pathway</h1>
+  <div class="subhead">
+    Treat all patients with acute or chronic HCV → pangenotypic DAA → SVR12 cure.
+    Based on AASLD‑IDSA 2023, CDC single‑visit testing, and AFP 2021.
+  </div>
+
+  <div class="steps">
+    <button class="step-pill active" data-target="section-screen"><span class="num">1</span> Screen &amp; Diagnose</button>
+    <button class="step-pill" data-target="section-pretreat"><span class="num">2</span> Pretreatment</button>
+    <button class="step-pill" data-target="section-treatment"><span class="num">3</span> Treatment</button>
+    <button class="step-pill" data-target="section-monitor"><span class="num">4</span> Monitor &amp; Cure</button>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="card" id="section-screen">
+    <div class="card-title">🔬 Screening &amp; Diagnosis</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label for="age">Patient age (years)</label>
+        <input type="number" id="age" value="45" min="0" max="120">
+      </div>
+      <div class="form-group">
+        <label for="risk">Ongoing risk factors?</label>
+        <select id="risk">
+          <option value="none">None / unknown</option>
+          <option value="idu">Injection drug use</option>
+          <option value="hiv_msm">HIV+ MSM</option>
+          <option value="pregnancy">Pregnant</option>
+          <option value="other">Other ongoing exposure</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>HCV antibody result</label>
+      <div class="radio-group">
+        <label><input type="radio" name="ab" value="positive"> Positive / reactive</label>
+        <label><input type="radio" name="ab" value="negative" checked> Negative</label>
+        <label><input type="radio" name="ab" value="unknown"> Not done</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>HCV RNA (reflex NAAT) result</label>
+      <div class="radio-group">
+        <label><input type="radio" name="rna" value="detectable"> Detectable</label>
+        <label><input type="radio" name="rna" value="undetectable"> Undetectable</label>
+        <label><input type="radio" name="rna" value="unknown" checked> Not done</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Infection type (if RNA detectable)</label>
+      <div class="radio-group">
+        <label><input type="radio" name="acute" value="chronic" checked> Chronic HCV</label>
+        <label><input type="radio" name="acute" value="acute"> Acute HCV (recent exposure / seroconversion)</label>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" id="btnDiagnose">Interpret results</button>
+      <button class="btn secondary" id="btnResetScreen">Reset</button>
+    </div>
+    <div id="diagnosisResult" class="result-box hidden"></div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="card" id="section-pretreat">
+    <div class="card-title">📋 Pretreatment Evaluation</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label for="fib4">FIB‑4 index</label>
+        <input type="number" id="fib4" value="1.2" step="0.1" min="0">
+      </div>
+      <div class="form-group">
+        <label for="platelets">Platelets (×10⁹/L)</label>
+        <input type="number" id="platelets" value="220" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Cirrhosis status</label>
+      <div class="radio-group">
+        <label><input type="radio" name="cirrhosis" value="no" checked> No cirrhosis (F0–F3)</label>
+        <label><input type="radio" name="cirrhosis" value="compensated"> Compensated cirrhosis (Child‑Pugh A)</label>
+        <label><input type="radio" name="cirrhosis" value="decompensated"> Decompensated (Child‑Pugh B/C)</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="egfr">eGFR (mL/min/1.73m²)</label>
+      <select id="egfr">
+        <option value="normal">≥60 (normal / mild)</option>
+        <option value="moderate">30–59 (moderate)</option>
+        <option value="severe">15–29 (severe)</option>
+        <option value="dialysis">&lt;15 or on dialysis</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>HBV coinfection status</label>
+      <div class="radio-group">
+        <label><input type="radio" name="hbv" value="no" checked> No / negative</label>
+        <label><input type="radio" name="hbv" value="hbsag_pos"> HBsAg positive (chronic HBV)</label>
+        <label><input type="radio" name="hbv" value="anti_hbc_pos"> Isolated anti‑HBc positive</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>HIV coinfection</label>
+      <div class="radio-group">
+        <label><input type="radio" name="hiv" value="no" checked> No / negative</label>
+        <label><input type="radio" name="hiv" value="yes"> Yes / positive</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Prior DAA exposure?</label>
+      <div class="radio-group">
+        <label><input type="radio" name="priorDAA" value="naive" checked> Treatment‑naïve</label>
+        <label><input type="radio" name="priorDAA" value="ns5a"> Prior NS5A inhibitor failure</label>
+        <label><input type="radio" name="priorDAA" value="multi"> Multiple DAA failures (incl. SOF/VEL/VOX)</label>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" id="btnPretreat">Assess &amp; recommend regimen</button>
+    </div>
+    <div id="pretreatResult" class="result-box hidden"></div>
+  </div>
+
+  <!-- SECTION 3 : TREATMENT -->
+  <div class="card" id="section-treatment">
+    <div class="card-title">💊 Treatment Regimens</div>
+
+    <div id="regimenRec" class="result-box info">
+      Complete pretreatment assessment (Step 2) to see a personalised regimen recommendation here.
+    </div>
+
+    <div class="result-box info" style="margin-top:1rem;">
+      <strong>🧭 Treat‑all principle:</strong> All patients with acute or chronic HCV should receive DAA therapy — except those with very short life expectancy unaddressable by therapy. Interferon and ribavirin‑based regimens are obsolete. Genotyping is <strong>NOT required</strong> for pangenotypic regimens.
+    </div>
+
+    <div class="sub-title">First‑line pangenotypic regimens (treatment‑naïve adults)</div>
+    <table class="regimen-table">
+      <thead>
+        <tr>
+          <th>Regimen</th>
+          <th>Duration — no cirrhosis</th>
+          <th>Duration — compensated cirrhosis</th>
+          <th>SVR12 efficacy</th>
+          <th>Key notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="drug-name">Glecaprevir / pibrentasvir</span><br>
+            <span class="drug-abbr">GLE/PIB · Mavyret · 300/120 mg daily with food</span><br>
+            <span class="pill-tag first">First‑line</span>
+          </td>
+          <td><span class="duration-badge">8 weeks</span><br><span class="drug-abbr">genotypes 1–6</span></td>
+          <td><span class="duration-badge">8 weeks</span><br><span class="drug-abbr">EXPEDITION‑8 · key 2023 change</span></td>
+          <td><span class="svr-badge">~98–99%</span></td>
+          <td>
+            Protease‑inhibitor regimen — <strong>avoid in decompensated (Child‑Pugh B/C)</strong>.<br>
+            Preferred in severe renal impairment / dialysis (no dose adjustment).<br>
+            Take with food.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="drug-name">Sofosbuvir / velpatasvir</span><br>
+            <span class="drug-abbr">SOF/VEL · Epclusa · 400/100 mg daily</span><br>
+            <span class="pill-tag first">First‑line</span>
+          </td>
+          <td><span class="duration-badge">12 weeks</span><br><span class="drug-abbr">genotypes 1–6</span></td>
+          <td><span class="duration-badge">12 weeks</span><br><span class="drug-abbr">genotypes 1, 2, 4, 5, 6</span></td>
+          <td><span class="svr-badge">~95–98%</span></td>
+          <td>
+            Pangenotypic; usable in decompensated cirrhosis <strong>with ribavirin</strong>.<br>
+            Sofosbuvir metabolite accumulates in renal impairment — consider alternate‑day dosing in hemodialysis.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="legend">
+      <span><span class="pill-tag first">First‑line</span> simplified algorithm</span>
+      <span><span class="pill-tag salv">Salvage</span> DAA‑experienced / failure</span>
+      <span><span class="pill-tag warn">Avoid</span> contraindicated / withdrawn</span>
+      <span><span class="pill-tag renal">Renal</span> CKD / dialysis note</span>
+      <span><span class="pill-tag hiv">HIV</span> coinfection</span>
+      <span><span class="pill-tag hbv">HBV</span> coinfection</span>
+      <span><span class="pill-tag acute">Acute</span> acute HCV</span>
+    </div>
+
+    <div class="sub-title">Alternatives &amp; special situations</div>
+    <ul class="note-list">
+      <li>
+        <span class="pill-tag acute">Acute HCV</span>
+        <strong>Treat all patients with acute HCV</strong> — same pangenotypic regimens as chronic HCV (GLE/PIB × 8 weeks or SOF/VEL × 12 weeks). SVR >95%. Do not wait for spontaneous clearance.
+      </li>
+      <li>
+        <span class="pill-tag salv">Salvage</span>
+        <strong>Sofosbuvir / velpatasvir / voxilaprevir</strong> (SOF/VEL/VOX · Vosevi) × 12 weeks —
+        for prior <strong>NS5A inhibitor failure</strong>. SVR12 ~96–97%.
+      </li>
+      <li>
+        <span class="pill-tag salv">Multi‑failure</span>
+        <strong>Multiple DAA failures (incl. SOF/VEL/VOX failure):</strong><br>
+        • <strong>GLE/PIB + sofosbuvir + weight‑based ribavirin × 16 weeks</strong>, OR<br>
+        • <strong>SOF/VEL/VOX + ribavirin × 24 weeks</strong>.
+      </li>
+      <li>
+        <span class="pill-tag first">Alternative</span>
+        <strong>Genotype 3 + compensated cirrhosis:</strong> SOF/VEL/VOX × 8–12 weeks (POLARIS‑3, SVR12 96%)
+        where RAS testing is unavailable.
+      </li>
+      <li>
+        <span class="pill-tag alt">Alternative</span>
+        <strong>Grazoprevir / elbasvir</strong> (Zepatier) — downgraded to alternative
+        (baseline RAS testing needed for genotype 1a). <strong>Withdrawn from the US market</strong>;
+        Zepatier and Technivie are no longer available.
+      </li>
+      <li>
+        <span class="pill-tag warn">Contraindicated</span>
+        <strong>Decompensated cirrhosis (Child‑Pugh B/C):</strong> protease‑inhibitor–containing regimens
+        (GLE/PIB, voxilaprevir) are contraindicated. Use SOF/VEL ± weight‑based ribavirin for 12 weeks,
+        managed with a liver specialist / transplant center.
+      </li>
+      <li>
+        <span class="pill-tag renal">Renal</span>
+        <strong>CKD G4–G5 / dialysis:</strong> all first‑line DAAs can be used across CKD stages including dialysis
+        with <strong>no dose adjustment</strong> for GLE/PIB or SOF/VEL. GLE/PIB is preferred.
+        SOF‑based regimens were historically avoided in severe impairment but real‑world data support use with monitoring.
+      </li>
+      <li>
+        <span class="pill-tag first">Genotyping</span>
+        <strong>Not required</strong> for pangenotypic regimens — reserve genotyping for specific retreatment contexts
+        (e.g., GLE/PIB in certain prior‑failure scenarios) or when RAS testing is being considered.
+      </li>
+    </ul>
+
+    <!-- HIV COINFECTION BOX -->
+    <div class="sub-title">🟣 HIV Coinfection — Treatment Guidance</div>
+    <div class="coinfection-box hiv-box">
+      <h4>💜 HIV/HCV Coinfection: How to Treat Safely</h4>
+      <ul>
+        <li><strong>DAA efficacy is comparable to HCV monoinfection</strong> — SVR rates &gt;95% with pangenotypic DAAs (GLE/PIB or SOF/VEL) [citation:6][citation:17].</li>
+        <li><strong>All people with HIV should be on ART</strong> before or concurrently with HCV treatment; ART slows liver disease progression by preserving immune function [citation:2][citation:13].</li>
+        <li><strong>Review ART for drug–drug interactions BEFORE starting DAA</strong> — this is the single most important safety step [citation:2][citation:13].</li>
+        <li><strong>Avoid GLE/PIB with:</strong> ritonavir‑boosted regimens (atazanavir, darunavir, lopinavir), efavirenz, etravirine, cyclosporine.</li>
+        <li><strong>Avoid SOF/VEL with:</strong> efavirenz, St. John's wort, rifampin.</li>
+        <li><strong>If ART must be modified:</strong> delay DAA initiation ≥2 weeks after ART change, and delay resuming original ART ≥2 weeks after DAA completion [citation:2].</li>
+        <li><strong>Monitor HIV RNA</strong> within 2–8 weeks after any ART modification to confirm virologic suppression [citation:2].</li>
+        <li><strong>Screen for HBV before starting HCV treatment</strong> — HIV/HCV/HBV triple coinfection is common; HBV reactivation risk applies [citation:2][citation:13].</li>
+        <li><strong>HIV coinfection is a risk factor for HCV relapse</strong> — consider prolonged RNA monitoring post‑SVR [citation:12].</li>
+      </ul>
+      <div class="small-note" style="margin-top:.75rem; background:#ede9fe;">
+        <strong>Coordinate with HIV specialist</strong> — pangenotypic DAAs are included in the simplified algorithm for people living with HIV, but ART regimen selection requires specialist input.
+      </div>
+    </div>
+
+    <!-- HBV COINFECTION BOX -->
+    <div class="sub-title">🟡 HBV Coinfection — Treatment Guidance</div>
+    <div class="coinfection-box hbv-box">
+      <h4>💛 HBV/HCV Coinfection: How to Treat Safely</h4>
+      <ul>
+        <li><strong>HBV reactivation risk is the key concern</strong> — not reduced HCV cure rates. DAA efficacy is preserved in HBV coinfection [citation:4][citation:10].</li>
+        <li><strong>HBsAg‑positive patients: reactivation rate ~30% without prophylaxis</strong> (Meta‑analysis, 27 studies) [citation:9].</li>
+        <li><strong>Prophylaxis with nucleos(t)ide analogues (NAs) — tenofovir (TDF/TAF) or entecavir — reduces reactivation risk to 19% of control</strong> (RR 0.19, 95% CI 0.06–0.58) [citation:9][citation:14].</li>
+        <li><strong>Prophylaxis must be started BEFORE DAA and continued until 12 weeks after DAA completion</strong> [citation:2][citation:13].</li>
+        <li><strong>Clinical trial evidence:</strong> SOF/VEL × 12 weeks + TAF pre‑treatment achieved 97.9% SVR12 in HBV/HCV coinfection, with significant improvement in liver fibrosis markers and no drug‑related adverse events [citation:4][citation:10].</li>
+        <li><strong>HBsAg‑negative, anti‑HBc‑positive (isolated anti‑HBc):</strong> reactivation rate 0% in pooled data, but individual case reports exist — risk not completely excluded. Monitor HBV DNA periodically [citation:9].</li>
+        <li><strong>If not using prophylaxis:</strong> monitor HBV DNA monthly; treat if &gt;10× baseline or &gt;1000 IU/mL [citation:2].</li>
+        <li><strong>Compensated cirrhosis + HBV/HCV:</strong> same SOF/VEL + TAF approach is safe and effective, with liver stiffness and FIB‑4 improvements post‑treatment [citation:4][citation:10].</li>
+      </ul>
+      <div class="small-note" style="margin-top:.75rem; background:#fef9c3;">
+        <strong>Specialist consultation recommended</strong> for HBV/HCV coinfection, especially if HBsAg‑positive, to coordinate antiviral prophylaxis and monitoring.
+      </div>
+    </div>
+
+    <!-- Legacy coinfection panel (kept for dynamic personalization) -->
+    <div class="sub-title" style="margin-top:2rem;">📋 Your Personalised Coinfection Summary</div>
+    <div id="coinfectionPanel" class="result-box info">
+      Select HBV and/or HIV status in Step 2 to see a personalised coinfection summary here.
+    </div>
+
+    <!-- SIDE EFFECTS BOX -->
+    <div class="sub-title">⚠️ Potential Side Effects of HCV Antivirals</div>
+    <div class="side-effects-box">
+      <h4>🩺 Adverse reaction profile by regimen</h4>
+      <div class="side-effects-grid">
+        <div class="side-effect-item">
+          <div class="se-drug">Glecaprevir / Pibrentasvir (GLE/PIB)</div>
+          <div class="se-list">
+            <span class="se-common">Common (≥5%):</span> headache (13%), fatigue (11%), nausea (8%).<br>
+            <span class="se-rare">Rare but serious:</span> acute kidney injury, acute interstitial nephritis, possible ANCA‑associated vasculitis.<br>
+            <strong>Discontinuation rate:</strong> 0.1% in trials.
+          </div>
+        </div>
+        <div class="side-effect-item">
+          <div class="se-drug">Sofosbuvir / Velpatasvir (SOF/VEL)</div>
+          <div class="se-list">
+            <span class="se-common">Common:</span> headache, fatigue, nausea (~10% any AE; none grade ≥3 in a Japanese cohort).<br>
+            <span class="se-rare">Rare:</span> bilateral neuroretinitis reported.<br>
+            <strong>Generally well tolerated</strong> — discontinuation due to AEs ~1%.
+          </div>
+        </div>
+        <div class="side-effect-item">
+          <div class="se-drug">Sofosbuvir / Velpatasvir / Voxilaprevir (SOF/VEL/VOX)</div>
+          <div class="se-list">
+            <span class="se-common">Common:</span> diarrhea, bronchitis (alone); fatigue, anemia, gastroenteritis, nausea (with ribavirin).<br>
+            <span class="se-rare">Rare:</span> grade 3 hyperglycemia — incidence 0.015%; monitor glucose in diabetics, especially genotype 3.<br>
+            <strong>Discontinuation:</strong> ≤1%.
+          </div>
+        </div>
+        <div class="side-effect-item">
+          <div class="se-drug">Grazoprevir / Elbasvir (EBR/GZR)</div>
+          <div class="se-list">
+            <span class="se-common">Common:</span> fatigue (13–23%), headache (12–20%), nausea (9–15%), diarrhea (10%).<br>
+            <strong>No discontinuations</strong> due to AEs in key trials.<br>
+            <em>Note: withdrawn from US market.</em>
+          </div>
+        </div>
+        <div class="side-effect-item">
+          <div class="se-drug">Ribavirin (RBV) — adjunct in decompensated cirrhosis</div>
+          <div class="se-list">
+            <span class="se-common">Common:</span> hemolytic anemia (61% in one series), hypocalcemia (58%), hypomagnesemia (46%).<br>
+            <strong>Requires monitoring:</strong> CBC, electrolytes; avoid in pregnancy (teratogenic).
+          </div>
+        </div>
+        <div class="side-effect-item">
+          <div class="se-drug">Class‑wide notes (all DAAs)</div>
+          <div class="se-list">
+            <strong>HBV reactivation:</strong> risk in HBsAg‑positive patients — screen and monitor/prophylax.<br>
+            <strong>Hepatotoxicity:</strong> rare, mainly in cirrhotics; discontinue for ALT ≥10× baseline.<br>
+            <strong>DDIs:</strong> most common cause of preventable AEs.
+          </div>
+        </div>
+      </div>
+      <div class="small-note" style="margin-top:1rem;">
+        Most AEs are mild and self‑limited. Serious events are rare. Always reconcile medications and monitor high‑risk patients (cirrhosis, renal impairment, diabetes).
+      </div>
+    </div>
+
+    <!-- DDI CHECK -->
+    <div class="sub-title">Drug–drug interaction (DDI) screening</div>
+    <div class="form-group">
+      <label>Common interacting medications to screen for</label>
+      <div class="check-grid" style="margin-top:.5rem;">
+        <label><input type="checkbox" class="ddi-check" value="ppi"> PPI / H2 blocker</label>
+        <label><input type="checkbox" class="ddi-check" value="statin"> Statin</label>
+        <label><input type="checkbox" class="ddi-check" value="amiodarone"> Amiodarone</label>
+        <label><input type="checkbox" class="ddi-check" value="anticonvulsant"> Carbamazepine / phenytoin</label>
+        <label><input type="checkbox" class="ddi-check" value="rifampin"> Rifampin / rifabutin</label>
+        <label><input type="checkbox" class="ddi-check" value="stjohn"> St. John's wort</label>
+        <label><input type="checkbox" class="ddi-check" value="cyclosporine"> Cyclosporine</label>
+        <label><input type="checkbox" class="ddi-check" value="art"> HIV ART (efavirenz, etc.)</label>
+      </div>
+    </div>
+    <button class="btn secondary" id="btnDDI" style="margin-top:.5rem;">Check interactions</button>
+    <div id="ddiResult" class="result-box warning hidden"></div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="card" id="section-monitor">
+    <div class="card-title">📈 Monitoring &amp; SVR12 Confirmation</div>
+    <div class="form-group">
+      <label>Treatment completed?</label>
+      <div class="radio-group">
+        <label><input type="radio" name="txcomplete" value="yes" checked> Yes</label>
+        <label><input type="radio" name="txcomplete" value="no"> No / ongoing</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>HCV RNA at ≥12 weeks post‑treatment (SVR12)</label>
+      <div class="radio-group">
+        <label><input type="radio" name="svr" value="undetectable" checked> Undetectable / unquantifiable</label>
+        <label><input type="radio" name="svr" value="detectable"> Detectable</label>
+        <label><input type="radio" name="svr" value="notdone"> Not yet done</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="postFibrosis">Post‑SVR fibrosis stage (if known)</label>
+      <select id="postFibrosis">
+        <option value="f0f2">F0–F2 (no advanced fibrosis)</option>
+        <option value="f3">F3 (bridging fibrosis)</option>
+        <option value="cirrhosis">Cirrhosis (any Child‑Pugh)</option>
+      </select>
+    </div>
+    <button class="btn" id="btnMonitor">Generate follow‑up plan</button>
+    <div id="monitorResult" class="result-box hidden"></div>
+  </div>
+
+  <hr>
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+    <div style="font-size:.8rem; color:#5a7a9a;">
+      Based on AASLD‑IDSA 2023, CDC 2023 single‑visit testing, AFP 2021, and expert consensus.
+    </div>
+    <button class="btn secondary" id="btnFullReset">Reset all</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  function getRadioValue(name) {
+    const el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : null;
+  }
+  function setRadioValue(name, value) {
+    const el = document.querySelector('input[name="' + name + '"][value="' + value + '"]');
+    if (el) el.checked = true;
+  }
+  function show(el, html, cls) {
+    el.innerHTML = html;
+    el.className = 'result-box ' + (cls || '');
+    el.classList.remove('hidden');
+  }
+  function hide(el) {
+    el.classList.add('hidden');
+    el.innerHTML = '';
+  }
+
+  const $ = id => document.getElementById(id);
+
+  const ageInput        = $('age');
+  const riskSelect      = $('risk');
+  const btnDiagnose     = $('btnDiagnose');
+  const btnResetScreen  = $('btnResetScreen');
+  const diagnosisResult = $('diagnosisResult');
+
+  const fib4Input       = $('fib4');
+  const plateletsInput  = $('platelets');
+  const egfrSelect      = $('egfr');
+  const btnPretreat     = $('btnPretreat');
+  const pretreatResult  = $('pretreatResult');
+  const regimenRec      = $('regimenRec');
+  const coinfectionPanel = $('coinfectionPanel');
+
+  const btnDDI          = $('btnDDI');
+  const ddiResult       = $('ddiResult');
+
+  const btnMonitor      = $('btnMonitor');
+  const monitorResult   = $('monitorResult');
+  const postFibrosisSelect = $('postFibrosis');
+
+  const btnFullReset    = $('btnFullReset');
+
+  /* ---------- STEP NAVIGATION ---------- */
+  const stepPills = document.querySelectorAll('.step-pill');
+  const sections = {
+    'section-screen':    $('section-screen'),
+    'section-pretreat':  $('section-pretreat'),
+    'section-treatment': $('section-treatment'),
+    'section-monitor':   $('section-monitor')
+  };
+
+  function activateStep(targetId) {
+    stepPills.forEach(p => p.classList.toggle('active', p.dataset.target === targetId));
+  }
+
+  stepPills.forEach(pill => {
+    pill.addEventListener('click', function () {
+      const targetId = this.dataset.target;
+      const section = sections[targetId];
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        activateStep(targetId);
+      }
+    });
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) activateStep(entry.target.id);
+    });
+  }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+
+  Object.values(sections).forEach(sec => { if (sec) observer.observe(sec); });
+
+  /* ---------- 1. DIAGNOSIS ---------- */
+  function interpretDiagnosis() {
+    const age = parseInt(ageInput.value, 10) || 0;
+    const risk = riskSelect.value;
+    const ab = getRadioValue('ab');
+    const rna = getRadioValue('rna');
+    const acute = getRadioValue('acute');
+    const lines = [];
+
+    if (age >= 18) lines.push('✅ <strong>Universal screening indicated</strong> — all adults ≥18 should be tested at least once.');
+    else lines.push('ℹ️ Routine universal screening applies to adults ≥18. Risk‑based testing may still apply.');
+
+    if (risk === 'pregnancy') lines.push('🤰 <strong>Screen during each pregnancy</strong> (CDC/USPSTF).');
+    else if (risk === 'idu' || risk === 'hiv_msm' || risk === 'other')
+      lines.push('🔁 <strong>Periodic testing recommended</strong> — ongoing risk exposure.');
+
+    let cls = '';
+    if (ab === 'positive' && rna === 'detectable') {
+      if (acute === 'acute') {
+        lines.push('🟥 <strong>Acute HCV infection confirmed</strong> — antibody positive with detectable RNA and recent exposure / seroconversion.');
+        lines.push('🧭 <strong>Treat all patients with acute HCV</strong> — same pangenotypic regimens as chronic HCV (GLE/PIB × 8 weeks or SOF/VEL × 12 weeks). Do not wait for spontaneous clearance.');
+      } else {
+        lines.push('🟥 <strong>Active chronic HCV infection confirmed</strong> — antibody positive with detectable RNA. Proceed to pretreatment evaluation.');
+        lines.push('🧭 <strong>Treat all patients with chronic HCV</strong> — DAA therapy achieves SVR12 >95% and reduces cirrhosis, HCC, and all‑cause mortality.');
+      }
+      cls = 'danger';
+    } else if (ab === 'positive' && rna === 'undetectable') {
+      lines.push('🟢 <strong>Resolved / cleared infection</strong> — antibody positive, RNA undetectable. No active infection.');
+    } else if (ab === 'positive' && rna === 'unknown') {
+      lines.push('⚠️ <strong>Reflex HCV RNA needed</strong> — antibody positive but RNA not done. Order reflex RNA (single‑visit testing).');
+      cls = 'warning';
+    } else if (ab === 'negative' && rna === 'detectable') {
+      lines.push('⚠️ <strong>Possible early / acute infection</strong> — RNA detectable but antibody negative (window period). Repeat antibody in 6–10 weeks or confirm with second RNA.');
+      cls = 'warning';
+    } else if (ab === 'negative' && rna === 'unknown') {
+      lines.push('🟢 Antibody negative — no evidence of HCV exposure. If acute infection suspected, test HCV RNA directly (antibody may be delayed 6–10 weeks, up to 6 months if immunocompromised).');
+    } else if (ab === 'unknown') {
+      lines.push('ℹ️ Start with an <strong>HCV antibody test with reflex HCV RNA</strong> — single blood draw.');
+    } else {
+      lines.push('ℹ️ No active infection identified from the provided results.');
+    }
+    lines.push('<span style="font-size:.85rem;color:#3a5e7a;">💡 Antibody may be negative in early acute infection — if suspected, test RNA directly.</span>');
+
+    show(diagnosisResult, lines.join('<br>'), cls);
+  }
+
+  /* ---------- 2. PRETREATMENT (connected to treatment) ---------- */
+  function assessPretreatment() {
+    const fib4      = parseFloat(fib4Input.value) || 0;
+    const platelets = parseFloat(plateletsInput.value) || 0;
+    const cirrhosis = getRadioValue('cirrhosis');
+    const egfr      = egfrSelect.value;
+    const hbv       = getRadioValue('hbv');
+    const hiv       = getRadioValue('hiv');
+    const priorDAA  = getRadioValue('priorDAA');
+
+    const msgs = [];
+    let regimenText = '';
+    let regimenCls  = 'info';
+
+    const isDecompensated = cirrhosis === 'decompensated';
+    const hasHBV = (hbv === 'hbsag_pos' || hbv === 'anti_hbc_pos');
+    const hasHIV = (hiv === 'yes');
+    const isNaive = (priorDAA === 'naive');
+
+    if (fib4 > 3.25) msgs.push('📊 FIB‑4 >3.25 suggests advanced fibrosis / cirrhosis — confirm with elastography or imaging.');
+    else if (fib4 > 1.45) msgs.push('📊 FIB‑4 1.45–3.25 — indeterminate; consider elastography.');
+    if (platelets < 150) msgs.push('🩸 Platelets <150 ×10⁹/L — supports possible portal hypertension / cirrhosis.');
+
+    if (hbv === 'hbsag_pos') {
+      msgs.push('🟡 <strong>HBsAg positive (chronic HBV)</strong> — HBV reactivation risk during DAA therapy is significant (~30% without prophylaxis). Give prophylactic tenofovir (TDF/TAF) or entecavir, continued until 12 weeks after DAA completion.');
+    } else if (hbv === 'anti_hbc_pos') {
+      msgs.push('🟡 <strong>Isolated anti‑HBc positive</strong> — past HBV exposure. Reactivation risk is low but monitor HBV DNA periodically.');
+    }
+
+    if (hasHIV) {
+      msgs.push('🔵 <strong>HIV coinfection</strong> — DAA efficacy is comparable to monoinfected patients. Review ART for drug–drug interactions before starting; efavirenz and ritonavir‑boosted regimens are problematic with DAAs.');
+    }
+
+    if (priorDAA === 'ns5a') {
+      msgs.push('🔁 <strong>Prior NS5A inhibitor failure</strong> — retreat with <strong>SOF/VEL/VOX × 12 weeks</strong>.');
+    } else if (priorDAA === 'multi') {
+      msgs.push('🔁 <strong>Multiple DAA failures (incl. SOF/VEL/VOX failure)</strong> — retreat with either <strong>GLE/PIB + sofosbuvir + weight‑based ribavirin × 16 weeks</strong>, OR <strong>SOF/VEL/VOX + ribavirin × 24 weeks</strong>. Refer to specialist.');
+    }
+
+    if (isDecompensated) {
+      regimenText = '🚫 <strong>Decompensated cirrhosis (Child‑Pugh B/C)</strong>: protease‑inhibitor regimens (GLE/PIB, voxilaprevir) are <strong>contraindicated</strong>. Use <strong>sofosbuvir/velpatasvir ± weight‑based ribavirin × 12 weeks</strong> and co‑manage with a specialist / transplant center.';
+      regimenCls = 'danger';
+    } else if (priorDAA === 'ns5a') {
+      regimenText = '🔁 <strong>Prior NS5A inhibitor failure</strong>: use <strong>SOF/VEL/VOX × 12 weeks</strong>. SVR12 ~96–97%.';
+      regimenCls = 'warning';
+    } else if (priorDAA === 'multi') {
+      regimenText = '🔁 <strong>Multiple DAA failures</strong>: <strong>GLE/PIB + sofosbuvir + weight‑based ribavirin × 16 weeks</strong>, OR <strong>SOF/VEL/VOX + ribavirin × 24 weeks</strong>. Refer to specialist.';
+      regimenCls = 'warning';
+    } else if (egfr === 'severe' || egfr === 'dialysis') {
+      regimenText = '💧 <strong>Severe renal impairment / dialysis</strong>: <strong>Glecaprevir/pibrentasvir (GLE/PIB) × 8 weeks</strong> is preferred — no dose adjustment, SVR ~98%. SOF/VEL × 12 weeks can be used but sofosbuvir metabolite accumulates; consider alternate‑day dosing in hemodialysis.';
+      regimenCls = 'info';
+    } else if (cirrhosis === 'compensated') {
+      regimenText = '💊 <strong>Compensated cirrhosis (Child‑Pugh A)</strong>: either <strong>GLE/PIB × 8 weeks</strong> (EXPEDITION‑8, SVR ~98%) or <strong>SOF/VEL × 12 weeks</strong> (SVR >95%). Both pangenotypic.';
+      regimenCls = 'info';
+    } else {
+      regimenText = '💊 <strong>No cirrhosis</strong>: first‑line pangenotypic options — <strong>GLE/PIB × 8 weeks</strong> (SVR ~98–99%) or <strong>SOF/VEL × 12 weeks</strong> (SVR ~95–98%).';
+      regimenCls = 'info';
+    }
+
+    if (hasHIV && isNaive && !isDecompensated && (egfr === 'normal' || egfr === 'moderate')) {
+      if (regimenText.includes('GLE/PIB') && regimenText.includes('SOF/VEL')) {
+        regimenText += '<br><span style="color:#5b21b6;"><strong>HIV coinfection note:</strong> Both regimens are effective, but <strong>review ART first</strong>. Avoid GLE/PIB with ritonavir‑boosted regimens; avoid SOF/VEL with efavirenz.</span>';
+      }
+    }
+
+    if (hasHBV && !isDecompensated && isNaive) {
+      regimenText += '<br><span style="color:#854d0e;"><strong>HBV coinfection note:</strong> DAA efficacy is not reduced. HBsAg‑positive patients need <strong>prophylaxis with tenofovir (TDF/TAF) or entecavir</strong> before starting DAA, continued until 12 weeks after completion.</span>';
+    }
+
+    msgs.push('ℹ️ Genotyping is <strong>NOT required</strong> for pangenotypic regimens unless using GLE/PIB in specific retreatment contexts.');
+
+    show(pretreatResult, msgs.join('<br>'), '');
+    show(regimenRec, regimenText, regimenCls);
+    regimenRec.dataset.regimen = isDecompensated ? 'SOF/VEL ± RBV'
+      : (priorDAA === 'ns5a' ? 'SOF/VEL/VOX'
+      : (priorDAA === 'multi' ? 'GLE/PIB + SOF + RBV or SOF/VEL/VOX + RBV'
+      : (egfr === 'severe' || egfr === 'dialysis' ? 'GLE/PIB preferred' : 'GLE/PIB or SOF/VEL')));
+    regimenRec.dataset.hbv = hbv;
+    regimenRec.dataset.hiv = hiv;
+    regimenRec.dataset.priorDAA = priorDAA;
+
+    if (!hasHBV && !hasHIV) {
+      show(coinfectionPanel, 'ℹ️ No HBV or HIV coinfection selected. Standard DAA regimen applies. Still screen for HBV (HBsAg, anti‑HBc) and HIV before starting any DAA.', 'info');
+    } else {
+      const parts = [];
+      if (hasHBV) {
+        if (hbv === 'hbsag_pos') {
+          parts.push('<strong>🟡 HBV (HBsAg positive):</strong> Reactivation risk ~30% without prophylaxis. Give tenofovir (TDF/TAF) or entecavir, continued until 12 weeks after DAA completion. Baseline HBsAg >185 IU/mL is a risk factor.');
+        } else if (hbv === 'anti_hbc_pos') {
+          parts.push('<strong>🟡 HBV (isolated anti‑HBc positive):</strong> Reactivation risk is low (~0.1%) but not zero. Monitor HBV DNA periodically, especially if on immunosuppressants.');
+        }
+      }
+      if (hasHIV) {
+        parts.push('<strong>🔵 HIV coinfection:</strong> DAA efficacy comparable to monoinfected — SVR >95%. Review ART for DDIs before starting DAA. Avoid GLE/PIB with ritonavir‑boosted regimens; avoid SOF/VEL with efavirenz. Coordinate with HIV specialist.');
+      }
+      parts.push('<div class="small-note">All pangenotypic DAAs are effective across genotypes including HIV coinfection. The main coinfection issue is <strong>HBV reactivation</strong> and <strong>ART drug interactions</strong>, not reduced HCV cure rates.</div>');
+      show(coinfectionPanel, parts.join('<br><br>'), 'info');
+    }
+  }
+
+  /* ---------- 3. DDI ---------- */
+  function checkDDI() {
+    const checked = Array.from(document.querySelectorAll('.ddi-check:checked')).map(cb => cb.value);
+    if (checked.length === 0) {
+      show(ddiResult, '✅ No common interacting medications selected. Still reconcile all meds (including OTC/herbal) against hep‑druginteractions.org.', '');
+      return;
+    }
+    const items = [];
+    const regimen = regimenRec.dataset.regimen || 'GLE/PIB or SOF/VEL';
+    const hiv = regimenRec.dataset.hiv || 'no';
+
+    if (checked.includes('ppi')) items.push('<span class="ddi-tag monitor">Monitor</span> <strong>PPI / H2 blocker</strong> — separate dosing: GLE/PIB ≥4 h before PPI; SOF/VEL omeprazole ≤20 mg taken 4 h after. H2 blockers: separate GLE/PIB by 4 h/12 h; famotidine ≤40 mg BID with SOF/VEL.');
+    if (checked.includes('statin')) items.push('<span class="ddi-tag contra">Avoid/Adjust</span> <strong>Statins</strong> — GLE/PIB: avoid atorvastatin, rosuvastatin, simvastatin, lovastatin; use low‑dose pravastatin/pitavastatin. SOF/VEL: rosuvastatin ≤10 mg.');
+    if (checked.includes('amiodarone')) items.push('<span class="ddi-tag contra">Contraindicated</span> <strong>Amiodarone + sofosbuvir</strong> — risk of symptomatic bradycardia. Avoid sofosbuvir‑containing regimens or monitor closely.');
+    if (checked.includes('anticonvulsant')) items.push('<span class="ddi-tag contra">Contraindicated</span> <strong>Carbamazepine / phenytoin / phenobarbital</strong> — strong inducers; contraindicated with GLE/PIB and SOF/VEL. Switch anticonvulsant.');
+    if (checked.includes('rifampin')) items.push('<span class="ddi-tag contra">Contraindicated</span> <strong>Rifampin / rifabutin / rifapentine</strong> — strong inducers; contraindicated with both regimens.');
+    if (checked.includes('stjohn')) items.push('<span class="ddi-tag contra">Contraindicated</span> <strong>St. John\'s wort</strong> — strong inducer; contraindicated with DAAs.');
+    if (checked.includes('cyclosporine')) items.push('<span class="ddi-tag contra">Contraindicated</span> <strong>Cyclosporine + GLE/PIB</strong> — significantly increases glecaprevir/pibrentasvir. Avoid GLE/PIB; with SOF/VEL review dose.');
+    if (checked.includes('art')) {
+      if (hiv === 'yes') {
+        items.push('<span class="ddi-tag contra">Critical</span> <strong>HIV ART</strong> — efavirenz contraindicated with both GLE/PIB and SOF/VEL; etravirine contraindicated with GLE/PIB; ritonavir‑boosted regimens avoid with GLE/PIB. <strong>Coordinate with HIV specialist before starting DAA</strong>.');
+      } else {
+        items.push('<span class="ddi-tag contra">Review</span> <strong>HIV ART</strong> — efavirenz contraindicated with both; etravirine contraindicated with GLE/PIB; ritonavir‑boosted regimens avoid with GLE/PIB.');
+      }
+    }
+
+    show(ddiResult,
+      '<strong>Interactions to address before starting ' + regimen + ':</strong>' +
+      '<ul class="ddi-list">' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>' +
+      '<div class="small-note">Always verify with hep‑druginteractions.org and adjust or switch co‑medications as needed.</div>',
+      'warning');
+  }
+
+  /* ---------- 4. MONITORING ---------- */
+  function generateMonitorPlan() {
+    const txComplete = getRadioValue('txcomplete');
+    const svr        = getRadioValue('svr');
+    const fibrosis   = postFibrosisSelect.value;
+    const hbv        = regimenRec.dataset.hbv || 'no';
+
+    if (txComplete === 'no') {
+      show(monitorResult,
+        '⏳ Treatment ongoing. <strong>MINMON</strong> (minimal monitoring) is safe and effective — routine on‑treatment labs can be limited to baseline and end of treatment in uncomplicated patients. Monitor adherence and drug interactions. Check hepatic labs if clinically indicated. Discontinue DAA for ALT ≥10× baseline or signs of hepatitis flare.',
+        '');
+      return;
+    }
+
+    if (svr === 'undetectable') {
+      let msg = '🎉 <strong>SVR12 achieved — virologic cure!</strong> Undetectable HCV RNA ≥12 weeks post‑treatment. ';
+      if (fibrosis === 'f0f2') msg += 'No cirrhosis: <strong>no routine liver follow‑up needed.</strong> Rescreen if ongoing risk behavior. Counsel on avoiding alcohol, metabolic steatosis, hepatotoxins.';
+      else if (fibrosis === 'f3') msg += 'F3 fibrosis: <strong>lifelong HCC surveillance with ultrasound ± AFP every 6 months.</strong> Consider upper endoscopy for varices every 2–3 years if cirrhosis develops.';
+      else msg += 'Cirrhosis: <strong>lifelong HCC surveillance (US ± AFP every 6 months)</strong> and <strong>endoscopic variceal surveillance</strong>. SVR reduces but does not eliminate HCC/decompensation risk.';
+
+      if (hbv === 'hbsag_pos') {
+        msg += '<br><br>🟡 <strong>HBV coinfection follow‑up:</strong> Continue HBV antiviral prophylaxis until 12 weeks after DAA completion, then reassess. If not on prophylaxis, continue monthly HBV DNA monitoring for at least 6 months post‑DAA.';
+      }
+      show(monitorResult, msg, '');
+    } else if (svr === 'detectable') {
+      show(monitorResult,
+        '⚠️ <strong>Detectable HCV RNA at ≥12 weeks post‑treatment</strong> — suggests relapse or reinfection. Confirm with repeat RNA. Consider resistance testing and salvage therapy — refer to specialist.',
+        'warning');
+    } else {
+      show(monitorResult,
+        '⏳ SVR12 not yet done. Obtain quantitative HCV RNA ≥12 weeks after completing therapy. Undetectable = cure.',
+        '');
+    }
+  }
+
+  /* ---------- reset helpers ---------- */
+  function resetScreenSection() {
+    ageInput.value = 45;
+    riskSelect.value = 'none';
+    setRadioValue('ab', 'negative');
+    setRadioValue('rna', 'unknown');
+    setRadioValue('acute', 'chronic');
+    hide(diagnosisResult);
+  }
+  function resetPretreatSection() {
+    fib4Input.value = 1.2;
+    plateletsInput.value = 220;
+    setRadioValue('cirrhosis', 'no');
+    egfrSelect.value = 'normal';
+    setRadioValue('hbv', 'no');
+    setRadioValue('hiv', 'no');
+    setRadioValue('priorDAA', 'naive');
+    hide(pretreatResult);
+    show(regimenRec, 'Complete pretreatment assessment (Step 2) to see a personalised regimen recommendation here.', 'info');
+    regimenRec.dataset.regimen = '';
+    regimenRec.dataset.hbv = '';
+    regimenRec.dataset.hiv = '';
+    regimenRec.dataset.priorDAA = '';
+    show(coinfectionPanel, 'Select HBV and/or HIV status in Step 2 to see a personalised coinfection summary here.', 'info');
+    document.querySelectorAll('.ddi-check').forEach(cb => cb.checked = false);
+    hide(ddiResult);
+  }
+  function resetMonitorSection() {
+    setRadioValue('txcomplete', 'yes');
+    setRadioValue('svr', 'undetectable');
+    postFibrosisSelect.value = 'f0f2';
+    hide(monitorResult);
+  }
+
+  /* ---------- attach listeners ---------- */
+  btnDiagnose.addEventListener('click', interpretDiagnosis);
+  btnResetScreen.addEventListener('click', resetScreenSection);
+  btnPretreat.addEventListener('click', assessPretreatment);
+  btnDDI.addEventListener('click', checkDDI);
+  btnMonitor.addEventListener('click', generateMonitorPlan);
+  btnFullReset.addEventListener('click', function () {
+    resetScreenSection();
+    resetPretreatSection();
+    resetMonitorSection();
+    activateStep('section-screen');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ---------- initial state ---------- */
+  hide(diagnosisResult);
+  hide(pretreatResult);
+  hide(ddiResult);
+  hide(monitorResult);
+})();
+</script>
+</body>
+</html>
